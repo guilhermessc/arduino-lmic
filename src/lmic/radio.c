@@ -682,7 +682,6 @@ void radio_init () {
     hal_waitUntil(os_getTime()+ms2osticks(5)); // wait 5ms
 
     opmode(OPMODE_SLEEP);
-
     // some sanity checks, e.g., read version number
     u1_t v = readReg(RegVersion);
 #ifdef CFG_sx1276_radio

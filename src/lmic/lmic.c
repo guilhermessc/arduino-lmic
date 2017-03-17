@@ -883,7 +883,7 @@ static ostime_t nextJoinState (void) {
     //   SF8C        on a random channel 64..71
     //
     u1_t failed = 0;
-    if( LMIC.datarate != DR_SF8C ) {
+/*    if( LMIC.datarate != DR_SF8C ) {  // guilherme
         LMIC.txChnl = 64+(LMIC.txChnl&7);
         setDrJoin(DRCHG_SET, DR_SF8C);
     } else {
@@ -894,7 +894,7 @@ static ostime_t nextJoinState (void) {
             failed = 1; // All DR exhausted - signal failed
         }
         setDrJoin(DRCHG_SET, dr);
-    }
+    }                                 // guilherme */
     LMIC.opmode &= ~OP_NEXTCHNL;
     LMIC.txend = os_getTime() +
         (isTESTMODE()
@@ -1429,6 +1429,7 @@ static bit_t processJoinAccept (void) {
             reportEvent(EV_REJOIN_FAILED);
             return 1;
         }
+        LMIC.guilherme_field |= 4;
         LMIC.opmode &= ~OP_TXRXPEND;
         ostime_t delay = nextJoinState();
         EV(devCond, DEBUG, (e_.reason = EV::devCond_t::NO_JACC,
@@ -1454,6 +1455,7 @@ static bit_t processJoinAccept (void) {
                            e_.info   = dlen < 4 ? 0 : mic,
                            e_.info2  = hdr + (dlen<<8)));
       badframe:
+        LMIC.guilherme_field |= 16;
         if( (LMIC.txrxFlags & TXRX_DNW1) != 0 )
             return 0;
         goto nojoinframe;
@@ -1462,9 +1464,12 @@ static bit_t processJoinAccept (void) {
     if( !aes_verifyMic0(LMIC.frame, dlen-4) ) {
         EV(specCond, ERR, (e_.reason = EV::specCond_t::JOIN_BAD_MIC,
                            e_.info   = mic));
+        LMIC.guilherme_field |= 128;
         goto badframe;
     }
 
+    LMIC.guilherme_field |= 8;
+    
     u4_t addr = os_rlsbf4(LMIC.frame+OFF_JA_DEVADDR);
     LMIC.devaddr = addr;
     LMIC.netid = os_rlsbf4(&LMIC.frame[OFF_JA_NETID]) & 0xFFFFFF;
@@ -1474,6 +1479,7 @@ static bit_t processJoinAccept (void) {
 #endif
     if( dlen > LEN_JA ) {
 #if defined(CFG_us915)
+        LMIC.guilherme_field |= 64;
         goto badframe;
 #endif
         dlen = OFF_CFLIST;
@@ -1487,6 +1493,8 @@ static bit_t processJoinAccept (void) {
             }
         }
     }
+
+    LMIC.guilherme_field |= 32;
 
     // already incremented when JOIN REQ got sent off
     aes_sessKeys(LMIC.devNonce-1, &LMIC.frame[OFF_JA_ARTNONCE], LMIC.nwkKey, LMIC.artKey);
@@ -1522,6 +1530,7 @@ static bit_t processJoinAccept (void) {
 
 
 static void processRx2Jacc (xref2osjob_t osjob) {
+    LMIC.guilherme_field |= 2;
     if( LMIC.dataLen == 0 )
         LMIC.txrxFlags = 0;  // nothing in 1st/2nd DN slot
     processJoinAccept();
@@ -1535,6 +1544,7 @@ static void setupRx2Jacc (xref2osjob_t osjob) {
 
 
 static void processRx1Jacc (xref2osjob_t osjob) {
+    LMIC.guilherme_field |= 1;
     if( LMIC.dataLen == 0 || !processJoinAccept() )
         schedRx12(DELAY_JACC2_osticks, FUNC_ADDR(setupRx2Jacc), LMIC.dn2Dr);
 }
