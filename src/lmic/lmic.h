@@ -150,6 +150,7 @@ enum {
 
 struct lmic_t {
     int guilherme_field;
+    char guilherme_field2[500];
     // Radio settings TX/RX (also accessed by HAL)
     ostime_t    txend;
     ostime_t    rxtime;

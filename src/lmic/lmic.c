@@ -1460,8 +1460,8 @@ static bit_t processJoinAccept (void) {
             return 0;
         goto nojoinframe;
     }
-    aes_encrypt(LMIC.frame+1, dlen-1);
-    if( !aes_verifyMic0(LMIC.frame, dlen-4) ) {
+    aes_encrypt(LMIC.frame+1, dlen-1);                        // guilherme
+    if( /*0 ) { // */ !aes_verifyMic0(LMIC.frame, dlen-4) ) {     // guilherme
         EV(specCond, ERR, (e_.reason = EV::specCond_t::JOIN_BAD_MIC,
                            e_.info   = mic));
         LMIC.guilherme_field |= 128;
@@ -2244,6 +2244,19 @@ void LMIC_reset (void) {
 
 void LMIC_init (void) {
     LMIC.opmode = OP_SHUTDOWN;
+
+    int guilherme_index;                       // guilherme begin
+    for(guilherme_index=0; guilherme_index<1000000; guilherme_index++){}
+
+
+    for(guilherme_index=0; guilherme_index<500; guilherme_index++){
+        LMIC.guilherme_field2[guilherme_index] = 0;
+    }
+    for(guilherme_index=0; guilherme_index<100; guilherme_index++){
+        LMIC.guilherme_field2[guilherme_index] = (char) guilherme_index+1;
+    }
+    aes_encrypt(LMIC.guilherme_field2, 100);                        // guilherme end
+    LMIC.guilherme_field = 256;
 }
 
 

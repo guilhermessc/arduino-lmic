@@ -148,9 +148,21 @@ void setup() {
     #endif
     // LMIC init
     os_init();
+
+    Serial.println("#########################################################");
+    if (LMIC.guilherme_field & 256) {
+    LMIC.guilherme_field &= !256;
+    int local_idx_gssc;
+    for (local_idx_gssc=0; local_idx_gssc<500; local_idx_gssc++){
+      Serial.print(LMIC.guilherme_field2[local_idx_gssc], HEX);
+      Serial.print(" ");  
+    }
+    Serial.println(".");
+  }
+  Serial.println("#########################################################");
     // Reset the MAC state. Session and pending data transfers will be discarded.
     LMIC_reset();
-    LMIC.guilherme_field = 0;
+    //LMIC.guilherme_field = 0;
     // Start job (sending automatically starts OTAA too)
     do_send(&sendjob);
 }
@@ -178,4 +190,6 @@ void loop() {
     Serial.println(LMIC.guilherme_field, BIN);
     loop_counter=LMIC.guilherme_field;
   }
+
+  
 }
